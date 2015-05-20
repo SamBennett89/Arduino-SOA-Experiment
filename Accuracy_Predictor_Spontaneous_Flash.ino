@@ -28,7 +28,17 @@ int numButtonPress          = 5;
 
 // timers
 unsigned long lastButtonTime    = 0;
-unsigned long elapsedTime       = 0;
+unsigned long elapsedTime[]     = {0, 0, 0, 0, 0};
+int buttonTimeAvg               = 0;
+unsigned long SCRtime[9][15]    = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                                    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                                    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                                    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                                    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                                    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                                    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                                    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                                    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
 
 // counters
 int b  = 0;
@@ -59,6 +69,10 @@ void loop() {
   for(c = 0; c < 9; c++){
     trial();
   }
+  printSCRtimes();
+  digitalWrite(promptLedPin, HIGH);
+  delay(10000);
+  digitalWrite(promptLedPin, LOW);
 }
 
 void trial() {
@@ -93,11 +107,35 @@ void trial() {
 }
 
 void buttonRead() {
+  if(b == numButtonPress){
+    buttonTimeAvg = (elapsedTime[0] + elapsedTime[1] + elapsedTime[2] + elapsedTime[3]) / 4;
+    do{
+      for(buttonNumber = 0; buttonNumber < 3; buttonNumber++) {
+        buttonState = digitalRead(buttonPin[buttonNumber]);
+        elapsedTime[4] = millis();
+        if(buttonState == false){
+          buttonPress();
+        }
+      }
+    }
+    while(elapsedTime[5] < buttonTimeAvg * 2);
+    if(elapsedTime[5] < buttonTimeAvg * 2){
+      buttonNumber = random(3);
+      Serial.println("-,void");
+      SCRtime[c][t] = millis();
+      digitalWrite(SCRPin, HIGH);
+      digitalWrite(ledPin[buttonNumber], HIGH);
+      delay(durationOnOff);
+      digitalWrite(ledPin[buttonNumber], LOW);
+      delay(durationDebounce);
+      digitalWrite(SCRPin, LOW);
+    }
+  }
   for(buttonNumber = 0; buttonNumber < 3; buttonNumber++) {
     buttonState = digitalRead(buttonPin[buttonNumber]);
     if(buttonState == false){
       buttonPress();
-    } 
+    }
   }
 }
 
@@ -127,6 +165,7 @@ void buttonPress() {
     selectAcc();
     if(accuracy[condition[c]][acc] == 1){
       Serial.println(accuracy[condition[c]][acc]);
+      SCRtime[c][t] = millis();
       digitalWrite(SCRPin, HIGH);
       digitalWrite(ledPin[buttonNumber], HIGH);
       delay(durationOnOff);
@@ -141,6 +180,7 @@ void buttonPress() {
       }
       while(buttonNumberIncorrect == buttonNumber);
       Serial.println(accuracy[condition[c]][acc]);
+      SCRtime[c][t] = millis();
       digitalWrite(SCRPin, HIGH);
       digitalWrite(ledPin[buttonNumberIncorrect], HIGH);
       delay(durationOnOff);
@@ -162,8 +202,21 @@ void selectAcc() {
 
 void printTime(){
   if(b > 0){
-    elapsedTime = millis() - lastButtonTime;
-    Serial.print(elapsedTime);
+    elapsedTime[b-1] = millis() - lastButtonTime;
+    Serial.print(elapsedTime[b-1]);
     Serial.print(","); 
+  }
+}
+
+void printSCRtimes(){
+  c = 0;
+  Serial.println();
+  Serial.println();
+  Serial.println("SCR Times;");
+  for(c = 0; c < 9; c++){
+    for(int i = 0; i < numTrials; i++){
+      Serial.print(SCRtime[c][i]);
+      Serial.print(","); 
+    }
   }
 }
